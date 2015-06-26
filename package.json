@@ -1,0 +1,26 @@
+{
+  "name": "43-32",
+  "version": "0.0.1",
+  "description": "Quick image ratio converter",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/uzyn/43-32.git"
+  },
+  "keywords": [
+    "photo",
+    "ratio",
+    "digicam",
+    "image",
+    "print"
+  ],
+  "author": "U-Zyn Chua <uzyn@zynesis.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/uzyn/43-32/issues"
+  },
+  "homepage": "https://github.com/uzyn/43-32#readme"
+}
