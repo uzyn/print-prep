@@ -2,6 +2,7 @@
 'use strict';
 
 var nopt = require('nopt');
+var processor = require('./processor');
 
 var knownOptions = {
   position: ['center', 'left', 'right'],
@@ -19,3 +20,10 @@ var shortHands = {
 };
 var options = nopt(knownOptions, shortHands);
 console.log(options);
+
+var source = options.argv.remain[0];
+
+processor.resize(source, {}, function(err) {
+  console.log(err);
+  console.log('Done');
+});

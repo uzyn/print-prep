@@ -27,6 +27,7 @@
   },
   "homepage": "https://github.com/uzyn/43-32#readme",
   "dependencies": {
-    "nopt": "^3.0.3"
+    "nopt": "^3.0.3",
+    "sharp": "^0.10.1"
   }
 }
