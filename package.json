@@ -2,7 +2,6 @@
   "name": "43-32",
   "version": "0.0.1",
   "description": "Quick image ratio converter",
-  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -18,9 +17,16 @@
     "print"
   ],
   "author": "U-Zyn Chua <uzyn@zynesis.com>",
-  "license": "MIT",
+  "license": "ISC",
+  "preferGlobal": true,
+  "bin": {
+    "4332": "src/index.js"
+  },
   "bugs": {
     "url": "https://github.com/uzyn/43-32/issues"
   },
-  "homepage": "https://github.com/uzyn/43-32#readme"
+  "homepage": "https://github.com/uzyn/43-32#readme",
+  "dependencies": {
+    "nopt": "^3.0.3"
+  }
 }
