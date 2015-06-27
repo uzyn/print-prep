@@ -19,12 +19,16 @@ var shortHands = {
   e: ['--ext']
 };
 var cliOptions = nopt(knownOptions, shortHands);
-console.log(options);
+console.log(cliOptions);
 
 var options = {
   source: cliOptions.argv.remain[0],
   output: cliOptions.argv.remain[1]
 };
+
+if (cliOptions.hasOwnProperty('color')) {
+  options.color = cliOptions.color;
+}
 
 processor.resize(options, function(err) {
   console.log(err);

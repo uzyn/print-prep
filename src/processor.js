@@ -1,6 +1,7 @@
 'use strict';
 var sharp = require('sharp');
 var async = require('async');
+var rgb = require('rgb');
 
 module.exports = {
   resize: function(options, next) {
@@ -10,6 +11,8 @@ module.exports = {
     ) {
       return next('Missing source and/or output');
     }
+
+    options.color = options.color || 'black';
 
     async.waterfall([
       function(callback) {
@@ -38,7 +41,7 @@ module.exports = {
 
         sharp(options.source)
           .rotate()
-          .background({r: 0, g: 0, b: 0, a: 1})
+          .background(rgb(options.color))
           .embed()
           .resize(size.intWidth, size.intHeight)
           .extract(0, 0, size.width, size.height)
