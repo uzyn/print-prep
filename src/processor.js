@@ -37,6 +37,7 @@ module.exports = {
         console.log(size);
 
         sharp(options.source)
+          .rotate()
           .background({r: 0, g: 0, b: 0, a: 1})
           .embed()
           .resize(size.intWidth, size.intHeight)
@@ -44,9 +45,8 @@ module.exports = {
           .normalize()
           .quality(100)
           .toFile(options.output, function(err) {
-            callback(err);
-          })
-        ;
+             callback(err);
+          });
       }
     ], function(err, result) {
       return next(err);
