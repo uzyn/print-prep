@@ -3,12 +3,17 @@ var sharp = require('sharp');
 var async = require('async');
 
 module.exports = {
-  resize: function(source, options, next) {
-    var output = 'temp/output.jpg';
+  resize: function(options, next) {
+    if (
+      !options.hasOwnProperty('source') ||
+      !options.hasOwnProperty('output')
+    ) {
+      return next('Missing source and/or output');
+    }
 
     async.waterfall([
       function(callback) {
-        sharp(source).metadata(callback);
+        sharp(options.source).metadata(callback);
       },
       function(meta, callback) {
         console.log(meta);
@@ -31,28 +36,28 @@ module.exports = {
 
         console.log(size);
 
-        sharp(source)
+        sharp(options.source)
           .background({r: 0, g: 0, b: 0, a: 1})
           .embed()
           .resize(size.intWidth, size.intHeight)
           .extract(0, 0, size.width, size.height)
           .normalize()
           .quality(100)
-          .toFile(output, function(err) {
+          .toFile(options.output, function(err) {
             callback(err);
           })
         ;
       }
     ], function(err, result) {
-      next(err);
+      return next(err);
     });
   },
 
   meta: function(source, next) {
-    sharp(source).metadata(next);
+    return sharp(source).metadata(next);
   }
 };
 
 function isLandscape(meta) {
-  return meta.width > meta.height;
+  return meta.width >= meta.height;
 }

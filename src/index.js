@@ -18,12 +18,15 @@ var shortHands = {
   r: ['--ratio'],
   e: ['--ext']
 };
-var options = nopt(knownOptions, shortHands);
+var cliOptions = nopt(knownOptions, shortHands);
 console.log(options);
 
-var source = options.argv.remain[0];
+var options = {
+  source: cliOptions.argv.remain[0],
+  output: cliOptions.argv.remain[1]
+};
 
-processor.resize(source, {}, function(err) {
+processor.resize(options, function(err) {
   console.log(err);
   console.log('Done');
 });
