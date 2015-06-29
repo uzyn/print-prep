@@ -13,6 +13,12 @@ module.exports = {
     }
 
     options.color = options.color || 'black';
+    options.ratio = options.ratio || '3:2';
+    var ratio = parseRatio(options.ratio);
+
+    if (!ratio) {
+      return next('Bad ratio');
+    }
 
     async.waterfall([
       function(callback) {
@@ -20,7 +26,7 @@ module.exports = {
       },
       function(meta, callback) {
         console.log(meta);
-        // Assuming resulting ratio is 3:2
+
         var landscape = isLandscape(meta);
         var size = {
           width: meta.width,
@@ -28,12 +34,12 @@ module.exports = {
         };
 
         if (landscape) {
-          size.width = size.height / 2 * 3;
-          size.intWidth = (2 * size.width) - meta.width;
+          size.width = size.height / ratio.height * ratio.width;
+          size.intWidth = (ratio.height * size.width) - meta.width;
           size.intHeight = size.height;
         } else {
-          size.height = size.width / 2 * 3;
-          size.intHeight = (2 * size.height) - meta.height;
+          size.height = size.width / ratio.height * ratio.width;
+          size.intHeight = (ratio.height * size.height) - meta.height;
           size.intWidth = size.width;
         }
 
@@ -63,4 +69,29 @@ module.exports = {
 
 function isLandscape(meta) {
   return meta.width >= meta.height;
+}
+
+function parseRatio(ratio) {
+  var parsed = ratio.split(':', 2);
+  if (parsed.length !== 2) {
+    return false;
+  }
+
+  var ok = true;
+  parsed.forEach(function(value, index) {
+    value = parseInt(value);
+    if (value <= 0) {
+      ok = false;
+      return false;
+    }
+    parsed[index] = value;
+  });
+
+  if (!ok) {
+    return false;
+  }
+  return {
+    width: parsed[0],
+    height: parsed[1]
+  }
 }
