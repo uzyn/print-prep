@@ -1,7 +1,6 @@
 # 43-32
 Digicam photos prep for print shops
 
-
 ### Help
 ```
 4332 [<source>] [<destination>] [<options>]
@@ -16,3 +15,7 @@ Options:
 -r, --ratio     Resulting ratio, defaults to `--ratio=3:2`
 -e, --ext       Specify extensions, defaults to `--ext=jpg,jpeg,tiff,png`.
 ```
+
+### Notes
+
+- 4332 always rotate photos to landscape.

@@ -1,4 +1,5 @@
 'use strict';
+var _ = require('lodash');
 var sharp = require('sharp');
 var async = require('async');
 var rgb = require('rgb');
@@ -28,25 +29,29 @@ module.exports = {
         console.log(meta);
 
         var landscape = isLandscape(meta);
+
+        if (!landscape) {
+          var temp = _.clone(meta);
+          meta.width = temp.height;
+          meta.height = temp.width;
+        }
         var size = {
           width: meta.width,
           height: meta.height
         };
 
-        if (landscape) {
-          size.width = size.height / ratio.height * ratio.width;
-          size.intWidth = (ratio.height * size.width) - meta.width;
-          size.intHeight = size.height;
-        } else {
-          size.height = size.width / ratio.height * ratio.width;
-          size.intHeight = (ratio.height * size.height) - meta.height;
-          size.intWidth = size.width;
+        size.width = size.height / ratio.height * ratio.width;
+        size.intWidth = (ratio.height * size.width) - meta.width;
+        size.intHeight = size.height;
+
+        var conv = sharp(options.source)
+          .rotate();
+
+        if (!landscape) {
+          conv.rotate(270);
         }
 
-        console.log(size);
-
-        sharp(options.source)
-          .rotate()
+        conv
           .background(rgb(options.color))
           .embed()
           .resize(size.intWidth, size.intHeight)
