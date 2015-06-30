@@ -44,14 +44,14 @@ module.exports = {
           size.intHeight = size.height;
           size.intWidth = (2 * size.width) - meta.width;
         } else {
-          console.log('NOT YET SUPPORTED');
-          process.exit();
+          size.width = meta.width;
+          size.height = size.width / ratio.width * ratio.height;
+          size.intWidth = size.width;
+          size.intHeight = (2 * size.height) - meta.height;
         }
         console.log(ratio);
         console.log(size);
-
         size = normalizeSize(size);
-
         console.log(size);
 
         var conv = sharp(options.source)
