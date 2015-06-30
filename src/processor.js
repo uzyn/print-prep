@@ -37,11 +37,12 @@ module.exports = {
         }
 
         var size = {};
-        if (ratio.width > ratio.height) {
+
+        if (ratio.width * meta.height > ratio.height * meta.width) {
           size.height = meta.height;
           size.width = size.height / ratio.height * ratio.width;
-          size.intWidth = (ratio.height * size.width) - meta.width;
           size.intHeight = size.height;
+          size.intWidth = (2 * size.width) - meta.width;
         } else {
           console.log('NOT YET SUPPORTED');
           process.exit();
@@ -50,6 +51,8 @@ module.exports = {
         console.log(size);
 
         size = normalizeSize(size);
+
+        console.log(size);
 
         var conv = sharp(options.source)
           .rotate();
@@ -114,11 +117,12 @@ function normalizeSize(size, cap) {
   var max = _.max(_.values(size));
   cap = cap || 16383;
 
+  var scale = 1;
   if (max > cap) {
     var scale = cap / max;
-    _.forIn(size, function(value, key) {
-      size[key] = parseInt(value * scale);
-    });
   }
+  _.forIn(size, function(value, key) {
+    size[key] = parseInt(value * scale);
+  });
   return size;
 }
