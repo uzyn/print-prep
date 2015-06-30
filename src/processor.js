@@ -49,6 +49,8 @@ module.exports = {
         console.log(ratio);
         console.log(size);
 
+        size = normalizeSize(size);
+
         var conv = sharp(options.source)
           .rotate();
         if (!landscape) {
@@ -102,4 +104,21 @@ function parseRatio(ratio) {
     width: parsed[0],
     height: parsed[1]
   }
+}
+
+/**
+ * Normalize size to prevent overflow
+ * as sharp only supports capped height or width of 16383
+ */
+function normalizeSize(size, cap) {
+  var max = _.max(_.values(size));
+  cap = cap || 16383;
+
+  if (max > cap) {
+    var scale = cap / max;
+    _.forIn(size, function(value, key) {
+      size[key] = parseInt(value * scale);
+    });
+  }
+  return size;
 }
