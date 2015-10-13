@@ -13,7 +13,7 @@ module.exports = {
       return next('Missing source and/or output');
     }
 
-    options.color = options.color || 'black';
+    options.color = options.color || 'white';
     options.ratio = options.ratio || '3:2';
     var ratio = parseRatio(options.ratio);
 

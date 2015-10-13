@@ -20,7 +20,7 @@
   "license": "ISC",
   "preferGlobal": true,
   "bin": {
-    "4332": "src/index.js"
+    "printprep": "src/index.js"
   },
   "bugs": {
     "url": "https://github.com/uzyn/43-32/issues"
