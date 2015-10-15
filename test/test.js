@@ -13,6 +13,7 @@ var metadata = function(fullPath, fn) {
 }
 
 var filePath = function(ratio, isOriginal, extension) {
+  if (typeof ratio === 'undefined') ratio = '4:3';
   if (typeof extension === 'undefined') extension = 'jpg';
   if (typeof isOriginal === 'undefined') isOriginal = true;
 
@@ -24,14 +25,16 @@ var filePath = function(ratio, isOriginal, extension) {
 
   switch (ratio) {
     case '3:4':
-    case '34':
       fullFilePath = path.normalize(fileFolder + '/3-4.' + extension);
       break;
 
     case '4:3':
-    case '43':
-    default:
       fullFilePath = path.normalize(fileFolder + '/4-3.' + extension);
+      break;
+
+    default:
+      // Serve ratio as filename
+      fullFilePath = path.normalize(fileFolder + '/' + ratio);
       break;
   }
   return fullFilePath;
@@ -59,8 +62,11 @@ var cleanOutput = function(fn) {
   });
 }
 
-describe('Convert single file', function() {
+describe.skip('Convert single file', function() {
   this.timeout(15000);
+  beforeEach(function(done) {
+    cleanOutput(done);
+  });
 
   it('4:3 to 3:4 (JPEG format)', function(done) {
     exec('printprep ' + filePath() + ' ' + filePath('3:4', false), function(err) {
@@ -88,16 +94,45 @@ describe('Convert single file', function() {
 
       async.parallel({
         original: function(callback) {
-          metadata(filePath(), callback);
+          metadata(filePath('4:3', true, 'png'), callback);
         },
         output: function(callback) {
-          metadata(filePath('3:4', false), callback);
+          metadata(filePath('3:4', false, 'png'), callback);
         }
       }, function(err, data) {
         assert.isNull(err, err);
         assert.isAbove(data.output.width, data.original.width - 1, 'Output width must greater or equal than original');
         assert.isAbove(data.output.height, data.original.height - 1, 'Output height must greater or equal than original');
         done();
+      });
+    });
+  });
+
+  // COVER: source is file but output is directory. (accept, output file name will same as original)
+});
+
+describe('Convert multiple files', function() {
+  this.timeout(15000);
+  beforeEach(function(done) {
+    cleanOutput(done);
+  });
+
+  // COVER: source is directory but output is file. (Not accept)
+  // COVER: source is directory and output is directory
+
+  it('select original folder', function(done) {
+    exec('printprep ' + originalFolderPath + ' ' + outputFolderPath, function(err, a, b) {
+      assert.isNull(err, err);
+
+      fs.readdir(outputFolderPath, function(err, list) {
+        assert.isNull(err, err);
+
+        async.each(list, function(filename, nextFile) {
+          console.log('File: ', filename);
+          nextFile();
+        }, function() {
+          done();
+        });
       });
     });
   });
