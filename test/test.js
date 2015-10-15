@@ -6,7 +6,11 @@ var assert = require('chai').assert;
 var exec = require('child_process').exec;
 
 var originalFolderPath = path.normalize(__dirname + '/originals');
-var refinesFolderPath = path.normalize(__dirname + '/refines');
+var outputFolderPath = path.normalize(__dirname + '/output');
+
+var metadata = function(fullPath, fn) {
+  sharp(fullPath).metadata(fn);
+}
 
 var filePath = function(ratio, isOriginal, extension) {
   if (typeof extension === 'undefined') extension = 'jpg';
@@ -15,7 +19,7 @@ var filePath = function(ratio, isOriginal, extension) {
   var fullFilePath = null;
   var fileFolder = originalFolderPath;
   if (!isOriginal) {
-    fileFolder = refinesFolderPath;
+    fileFolder = outputFolderPath;
   }
 
   switch (ratio) {
@@ -33,8 +37,8 @@ var filePath = function(ratio, isOriginal, extension) {
   return fullFilePath;
 }
 
-var cleanUpRefines = function(fn) {
-  fs.readdir(refinesFolderPath, function(err, list) {
+var cleanOutput = function(fn) {
+  fs.readdir(outputFolderPath, function(err, list) {
     if (err) {
       console.error(err);
       return fn(err);
@@ -45,7 +49,7 @@ var cleanUpRefines = function(fn) {
         return nextFile();
       }
 
-      fs.unlink(path.normalize(refinesFolderPath + '/' + filename), nextFile);
+      fs.unlink(path.normalize(outputFolderPath + '/' + filename), nextFile);
     }, function(err) {
       if (err) {
         console.error('Unlink file: ', err);
@@ -62,7 +66,19 @@ describe('Convert single file', function() {
     exec('printprep ' + filePath() + ' ' + filePath('3:4', false), function(err) {
       assert.isNull(err, err);
 
-      return done();
+      async.parallel({
+        original: function(callback) {
+          metadata(filePath(), callback);
+        },
+        output: function(callback) {
+          metadata(filePath('3:4', false), callback);
+        }
+      }, function(err, data) {
+        assert.isNull(err, err);
+        assert.isAbove(data.output.width, data.original.width - 1, 'Output width must greater or equal than original');
+        assert.isAbove(data.output.height, data.original.height - 1, 'Output height must greater or equal than original');
+        done();
+      });
     });
   });
 
@@ -70,13 +86,25 @@ describe('Convert single file', function() {
     exec('printprep ' + filePath('4:3', true, 'png') + ' ' + filePath('3:4', false, 'png'), function(err) {
       assert.isNull(err, err);
 
-      return done();
+      async.parallel({
+        original: function(callback) {
+          metadata(filePath(), callback);
+        },
+        output: function(callback) {
+          metadata(filePath('3:4', false), callback);
+        }
+      }, function(err, data) {
+        assert.isNull(err, err);
+        assert.isAbove(data.output.width, data.original.width - 1, 'Output width must greater or equal than original');
+        assert.isAbove(data.output.height, data.original.height - 1, 'Output height must greater or equal than original');
+        done();
+      });
     });
   });
 });
 
 describe('Clean up', function() {
-  it('refines folder', function(done) {
-    cleanUpRefines(done);
+  it('output folder', function(done) {
+    cleanOutput(done);
   });
 });
