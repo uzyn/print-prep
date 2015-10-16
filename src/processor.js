@@ -1,6 +1,7 @@
 'use strict';
 var _ = require('lodash');
 var fs = require('fs');
+var path = require('path');
 var sharp = require('sharp');
 var async = require('async');
 var rgb = require('rgb');
@@ -36,67 +37,83 @@ module.exports = {
       // Do nothing
     };
 
+    var files = [];
     if (sourceStat.isDirectory()) {
       if (!outputStat || !outputStat.isDirectory()) {
         return next('Bad output');
       }
 
-      // TODO: Multiple files logic
+      var filenames = fs.readdirSync(options.source);
+      _.each(filenames, function(filename) {
+        files.push({
+          source: path.normalize(options.source + '/' + filename),
+          output: path.normalize(options.output + '/' + filename)
+        });
+      });
     }
 
-    async.waterfall([
-      function(callback) {
-        sharp(options.source).metadata(callback);
-      },
-      function(meta, callback) {
-        console.log(meta);
+    if (sourceStat.isFile()) {
+      files.push({
+        source: options.source,
+        output: options.output
+      });
+    }
 
-        var landscape = isLandscape(meta);
+    async.each(files, function(file, nextEach) {
+      async.waterfall([
+        function(callback) {
+          sharp(file.source).metadata(callback);
+        },
+        function(meta, callback) {
+          console.log(meta);
 
-        if (!landscape) {
-          var temp = _.clone(meta);
-          meta.width = temp.height;
-          meta.height = temp.width;
+          var landscape = isLandscape(meta);
+
+          if (!landscape) {
+            var temp = _.clone(meta);
+            meta.width = temp.height;
+            meta.height = temp.width;
+          }
+
+          var size = {};
+
+          if (ratio.width * meta.height > ratio.height * meta.width) {
+            size.height = meta.height;
+            size.width = size.height / ratio.height * ratio.width;
+            size.intHeight = size.height;
+            size.intWidth = (2 * size.width) - meta.width;
+          } else {
+            size.width = meta.width;
+            size.height = size.width / ratio.width * ratio.height;
+            size.intWidth = size.width;
+            size.intHeight = (2 * size.height) - meta.height;
+          }
+          console.log(ratio);
+          console.log(size);
+          size = normalizeSize(size);
+          console.log(size);
+
+          var conv = sharp(file.source)
+            .rotate();
+          if (!landscape) {
+            conv.rotate(270);
+          }
+          conv
+            .background(rgb(options.color))
+            .embed()
+            .resize(size.intWidth, size.intHeight)
+            .extract(0, 0, size.width, size.height)
+            .quality(100)
+            .toFile(file.output, function(err) {
+               callback(err);
+            });
         }
-
-        var size = {};
-
-        if (ratio.width * meta.height > ratio.height * meta.width) {
-          size.height = meta.height;
-          size.width = size.height / ratio.height * ratio.width;
-          size.intHeight = size.height;
-          size.intWidth = (2 * size.width) - meta.width;
-        } else {
-          size.width = meta.width;
-          size.height = size.width / ratio.width * ratio.height;
-          size.intWidth = size.width;
-          size.intHeight = (2 * size.height) - meta.height;
-        }
-        console.log(ratio);
-        console.log(size);
-        size = normalizeSize(size);
-        console.log(size);
-
-        var conv = sharp(options.source)
-          .rotate();
-        if (!landscape) {
-          conv.rotate(270);
-        }
-        conv
-          .background(rgb(options.color))
-          .embed()
-          .resize(size.intWidth, size.intHeight)
-          .extract(0, 0, size.width, size.height)
-          .normalize()
-          .quality(100)
-          .toFile(options.output, function(err) {
-             callback(err);
-          });
-      }
-    ], function(err, result) {
+      ], function(err, result) {
+        return nextEach(err);
+      });
+    }, function(err) {
       return next(err);
     });
-
   },
 
   meta: function(source, next) {

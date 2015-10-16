@@ -103,19 +103,30 @@ describe('Convert multiple files', function() {
     });
   });
 
-  it.skip('source is directory and output is directory', function(done) {
-    exec('printprep ' + originalPath() + ' ' + outputPath(), function(err, a, b) {
+  it('source is directory and output is directory', function(done) {
+    exec('printprep ' + originalPath() + ' ' + outputPath(), function(err) {
       assert.isNull(err, err);
 
-      fs.readdir(outputPath(), function(err, list) {
-        assert.isNull(err, err);
+      var originalFiles = fs.readdirSync(originalPath());
+      async.each(originalFiles, function(filename, nextFile) {
+        if (filename === 'empty') {
+          return nextFile();
+        }
 
-        async.each(list, function(filename, nextFile) {
-          console.log('File: ', filename);
+        async.parallel({
+          original: function(callback) {
+            metadata(originalPath(filename), callback);
+          },
+          output: function(callback) {
+            metadata(outputPath(filename), callback);
+          }
+        }, function(err, data) {
+          assert.isNull(err, err);
+          assert.notEqual(data.output.width, data.original.width, 'Output ' + filename + ' width must not equal to original');
           nextFile();
-        }, function() {
-          done();
         });
+      }, function() {
+        done();
       });
     });
   });
