@@ -18,6 +18,7 @@ module.exports = {
     options.color = options.color || 'white';
     options.ratio = options.ratio || '3:2';
     options.normalize = options.normalize || false;
+    options.position = options.position || 'right';
     var ratio = parseRatio(options.ratio);
 
     if (!ratio) {
@@ -102,9 +103,24 @@ module.exports = {
           conv
             .background(rgb(options.color))
             .embed()
-            .resize(size.intWidth, size.intHeight)
-            .extract(0, 0, size.width, size.height)
-            .quality(100);
+            .resize(size.intWidth, size.intHeight);
+
+          switch(options.position) {
+            case 'left':
+              conv.extract(0, size.intWidth - size.width, size.width, size.height);
+              break;
+
+            case 'center':
+              conv.extract(0, Math.round((size.intWidth - size.width) / 2), size.width, size.height);
+              break;
+
+            case 'right':
+            default:
+              conv.extract(0, 0, size.width, size.height);
+              break;
+          }
+
+          conv.quality(100);
 
           if (options.normalize) {
             conv.normalize();
