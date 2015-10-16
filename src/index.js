@@ -9,14 +9,16 @@ var knownOptions = {
   fillup: Boolean,
   color: String,
   ratio: String,
-  ext: [String, Array]
+  ext: [String, Array],
+  normalize: Boolean
 };
 var shortHands = {
   p: ['--position'],
   f: ['--fillup'],
   c: ['--color'],
   r: ['--ratio'],
-  e: ['--ext']
+  e: ['--ext'],
+  n: ['--normalize']
 };
 var options = nopt(knownOptions, shortHands);
 console.log(options);

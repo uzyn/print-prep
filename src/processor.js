@@ -17,6 +17,7 @@ module.exports = {
 
     options.color = options.color || 'white';
     options.ratio = options.ratio || '3:2';
+    options.normalize = options.normalize || false;
     var ratio = parseRatio(options.ratio);
 
     if (!ratio) {
@@ -103,10 +104,15 @@ module.exports = {
             .embed()
             .resize(size.intWidth, size.intHeight)
             .extract(0, 0, size.width, size.height)
-            .quality(100)
-            .toFile(file.output, function(err) {
-               callback(err);
-            });
+            .quality(100);
+
+          if (options.normalize) {
+            conv.normalize();
+          }
+
+          conv.toFile(file.output, function(err) {
+            callback(err);
+          });
         }
       ], function(err, result) {
         return nextEach(err);
