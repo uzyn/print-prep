@@ -90,16 +90,20 @@ describe('Convert single file', function() {
   // COVER: source is file but output is directory. (accept, output file name will same as original)
 });
 
-describe.skip('Convert multiple files', function() {
+describe('Convert multiple files', function() {
   this.timeout(15000);
   beforeEach(function(done) {
     cleanOutput(done);
   });
 
-  // COVER: source is directory but output is file. (Not accept)
-  // COVER: source is directory and output is directory
+  it('source is directory but output is file.', function(done) {
+    exec('printprep ' + originalPath() + ' ' + outputPath('a-file.jpg'), function(err) {
+      assert.isNotNull(err, 'Output must is a directory');
+      done();
+    });
+  });
 
-  it('select original folder', function(done) {
+  it.skip('source is directory and output is directory', function(done) {
     exec('printprep ' + originalPath() + ' ' + outputPath(), function(err, a, b) {
       assert.isNull(err, err);
 

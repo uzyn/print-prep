@@ -25,6 +25,8 @@ options.source = options.argv.remain[0];
 options.output = options.argv.remain[1];
 
 processor.resize(options, function(err) {
-  console.log(err);
+  if (err) {
+    throw new Error(err)
+  }
   console.log('Done');
 });

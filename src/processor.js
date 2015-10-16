@@ -1,5 +1,6 @@
 'use strict';
 var _ = require('lodash');
+var fs = require('fs');
 var sharp = require('sharp');
 var async = require('async');
 var rgb = require('rgb');
@@ -19,6 +20,28 @@ module.exports = {
 
     if (!ratio) {
       return next('Bad ratio');
+    }
+
+    var sourceStat = null;
+    try {
+      sourceStat = fs.lstatSync(options.source);
+    } catch(e) {
+      return next('Bad source');
+    }
+
+    var outputStat = null;
+    try {
+      outputStat = fs.lstatSync(options.output);
+    } catch(e) {
+      // Do nothing
+    };
+
+    if (sourceStat.isDirectory()) {
+      if (!outputStat || !outputStat.isDirectory()) {
+        return next('Bad output');
+      }
+
+      // TODO: Multiple files logic
     }
 
     async.waterfall([
@@ -73,6 +96,7 @@ module.exports = {
     ], function(err, result) {
       return next(err);
     });
+
   },
 
   meta: function(source, next) {
