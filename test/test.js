@@ -5,43 +5,22 @@ var sharp = require('sharp');
 var assert = require('chai').assert;
 var exec = require('child_process').exec;
 
-var originalFolderPath = path.normalize(__dirname + '/originals');
-var outputFolderPath = path.normalize(__dirname + '/output');
-
 var metadata = function(fullPath, fn) {
   sharp(fullPath).metadata(fn);
 }
 
-var filePath = function(ratio, isOriginal, extension) {
-  if (typeof ratio === 'undefined') ratio = '4:3';
-  if (typeof extension === 'undefined') extension = 'jpg';
-  if (typeof isOriginal === 'undefined') isOriginal = true;
+var originalPath = function(filename) {
+  filename = filename || '';
+  return path.normalize(__dirname + '/originals/' + filename);
+}
 
-  var fullFilePath = null;
-  var fileFolder = originalFolderPath;
-  if (!isOriginal) {
-    fileFolder = outputFolderPath;
-  }
-
-  switch (ratio) {
-    case '3:4':
-      fullFilePath = path.normalize(fileFolder + '/3-4.' + extension);
-      break;
-
-    case '4:3':
-      fullFilePath = path.normalize(fileFolder + '/4-3.' + extension);
-      break;
-
-    default:
-      // Serve ratio as filename
-      fullFilePath = path.normalize(fileFolder + '/' + ratio);
-      break;
-  }
-  return fullFilePath;
+var outputPath = function(filename) {
+  filename = filename || '';
+  return path.normalize(__dirname + '/output/' + filename);
 }
 
 var cleanOutput = function(fn) {
-  fs.readdir(outputFolderPath, function(err, list) {
+  fs.readdir(outputPath(), function(err, list) {
     if (err) {
       console.error(err);
       return fn(err);
@@ -52,7 +31,7 @@ var cleanOutput = function(fn) {
         return nextFile();
       }
 
-      fs.unlink(path.normalize(outputFolderPath + '/' + filename), nextFile);
+      fs.unlink(outputPath(filename), nextFile);
     }, function(err) {
       if (err) {
         console.error('Unlink file: ', err);
@@ -62,22 +41,22 @@ var cleanOutput = function(fn) {
   });
 }
 
-describe.skip('Convert single file', function() {
+describe('Convert single file', function() {
   this.timeout(15000);
   beforeEach(function(done) {
     cleanOutput(done);
   });
 
   it('4:3 to 3:4 (JPEG format)', function(done) {
-    exec('printprep ' + filePath() + ' ' + filePath('3:4', false), function(err) {
+    exec('printprep ' + originalPath('4-3.jpg') + ' ' + outputPath('3-4.jpg'), function(err) {
       assert.isNull(err, err);
 
       async.parallel({
         original: function(callback) {
-          metadata(filePath(), callback);
+          metadata(originalPath('4-3.jpg'), callback);
         },
         output: function(callback) {
-          metadata(filePath('3:4', false), callback);
+          metadata(outputPath('3-4.jpg'), callback);
         }
       }, function(err, data) {
         assert.isNull(err, err);
@@ -89,15 +68,15 @@ describe.skip('Convert single file', function() {
   });
 
   it('4:3 to 3:4 (PNG format)', function(done) {
-    exec('printprep ' + filePath('4:3', true, 'png') + ' ' + filePath('3:4', false, 'png'), function(err) {
+    exec('printprep ' + originalPath('4-3.png') + ' ' + outputPath('3-4.png'), function(err) {
       assert.isNull(err, err);
 
       async.parallel({
         original: function(callback) {
-          metadata(filePath('4:3', true, 'png'), callback);
+          metadata(originalPath('4-3.png'), callback);
         },
         output: function(callback) {
-          metadata(filePath('3:4', false, 'png'), callback);
+          metadata(outputPath('3-4.png'), callback);
         }
       }, function(err, data) {
         assert.isNull(err, err);
@@ -111,7 +90,7 @@ describe.skip('Convert single file', function() {
   // COVER: source is file but output is directory. (accept, output file name will same as original)
 });
 
-describe('Convert multiple files', function() {
+describe.skip('Convert multiple files', function() {
   this.timeout(15000);
   beforeEach(function(done) {
     cleanOutput(done);
@@ -121,10 +100,10 @@ describe('Convert multiple files', function() {
   // COVER: source is directory and output is directory
 
   it('select original folder', function(done) {
-    exec('printprep ' + originalFolderPath + ' ' + outputFolderPath, function(err, a, b) {
+    exec('printprep ' + originalPath() + ' ' + outputPath(), function(err, a, b) {
       assert.isNull(err, err);
 
-      fs.readdir(outputFolderPath, function(err, list) {
+      fs.readdir(outputPath(), function(err, list) {
         assert.isNull(err, err);
 
         async.each(list, function(filename, nextFile) {
