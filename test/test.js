@@ -19,26 +19,41 @@ var outputPath = function(filename) {
   return path.normalize(__dirname + '/output/' + filename);
 }
 
+var preprocessPath = function(filename) {
+  filename = filename || '';
+  return path.normalize(__dirname + '/preprocess/' + filename);
+}
+
 var cleanOutput = function(fn) {
-  fs.readdir(outputPath(), function(err, list) {
-    if (err) {
-      console.error(err);
-      return fn(err);
-    }
+  var directories = [];
+  directories.push(outputPath());
+  directories.push(preprocessPath());
 
-    async.each(list, function(filename, nextFile) {
-      if (filename === 'empty') {
-        return nextFile();
-      }
-
-      fs.unlink(outputPath(filename), nextFile);
-    }, function(err) {
+  async.each(directories, function(directory, nextEach) {
+    fs.readdir(directory, function(err, list) {
       if (err) {
-        console.error('Unlink file: ', err);
+        console.error(err);
+        return fn(err);
       }
-      return fn();
+
+      async.each(list, function(filename, nextFile) {
+        if (filename === 'empty') {
+          return nextFile();
+        }
+
+        fs.unlink(path.normalize(directory + filename), nextFile);
+      }, function(err) {
+        return nextEach(err);
+      });
     });
+  }, function(err) {
+    if (err) {
+      console.error('Unlink file: ', err);
+    }
+    return fn();
   });
+
+
 }
 
 describe('Convert single file', function() {
@@ -145,6 +160,27 @@ describe('Read config file', function() {
       var outputFiles = fs.readdirSync(outputPath());
       assert.equal(outputFiles.length, 5, 'Output should have 4 photos.');
       done();
+    });
+  });
+
+  it('use default config file.', function(done) {
+    var copy = fs.createReadStream('./test/printprep.config.example.json').pipe(
+      fs.createWriteStream('./test/printprep.config.json')
+    );
+
+    exec('cd ./test && printprep', function(err) {
+      assert.isNull(err, 'Unable to read config.json');
+
+      var preprocessFiles = fs.readdirSync(preprocessPath());
+      assert.equal(preprocessFiles.length, 5, 'Output should have 4 photos.');
+
+      var outputFiles = fs.readdirSync(outputPath());
+      assert.equal(outputFiles.length, 5, 'Output should have 4 photos.');
+
+      fs.unlink('./test/printprep.config.json', function(err) {
+        assert.isNull(err, 'Unable to delete printprep.config.json');
+        done();
+      });
     });
   });
 });
