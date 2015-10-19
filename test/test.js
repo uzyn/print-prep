@@ -163,7 +163,7 @@ describe('Read config file', function() {
     });
   });
 
-  it('use default config file.', function(done) {
+  it('auto load default config file.', function(done) {
     var copy = fs.createReadStream('./test/printprep.config.example.json').pipe(
       fs.createWriteStream('./test/printprep.config.json')
     );
