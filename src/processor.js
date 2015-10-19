@@ -22,6 +22,9 @@ module.exports = {
     if (input && _.isArray(input)) {
       configs = input;
     }
+    if (input === false) {
+      configs.push(options);
+    }
 
     async.eachSeries(configs, function(config, nextEach) {
       var opts = _.merge(options, config);

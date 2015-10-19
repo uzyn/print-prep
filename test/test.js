@@ -48,7 +48,7 @@ describe('Convert single file', function() {
   });
 
   it('4:3 to 3:4 (JPEG format)', function(done) {
-    exec('printprep ' + originalPath('4-3.jpg') + ' ' + outputPath('3-4.jpg'), function(err) {
+    exec('printprep ' + originalPath('4-3.jpg') + ' ' + outputPath('3-4.jpg'), function(err, o, e) {
       assert.isNull(err, err);
 
       async.parallel({
@@ -128,6 +128,23 @@ describe('Convert multiple files', function() {
       }, function() {
         done();
       });
+    });
+  });
+});
+
+describe('Read config file', function() {
+  this.timeout(15000);
+  beforeEach(function(done) {
+    cleanOutput(done);
+  });
+
+  it('load config.json.', function(done) {
+    exec('printprep --config=./test/config.json', function(err) {
+      assert.isNull(err, 'Unable to read config.json');
+
+      var outputFiles = fs.readdirSync(outputPath());
+      assert.equal(outputFiles.length, 5, 'Output should have 4 photos.');
+      done();
     });
   });
 });
