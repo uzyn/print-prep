@@ -1,0 +1,7 @@
+[
+  {
+    "source": "./originals",
+    "output": "./output",
+    "position": "right"
+  }
+]

@@ -18,7 +18,8 @@ var shortHands = {
   c: ['--color'],
   r: ['--ratio'],
   e: ['--ext'],
-  n: ['--normalize']
+  n: ['--normalize'],
+  i: ['--config']
 };
 var options = nopt(knownOptions, shortHands);
 console.log(options);
@@ -26,7 +27,7 @@ console.log(options);
 options.source = options.argv.remain[0];
 options.output = options.argv.remain[1];
 
-processor.resize(options, function(err) {
+processor.process(options, function(err) {
   if (err) {
     throw new Error(err)
   }
