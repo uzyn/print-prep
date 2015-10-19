@@ -23,7 +23,7 @@ module.exports = {
       configs = input;
     }
 
-    async.each(configs, function(config, nextEach) {
+    async.eachSeries(configs, function(config, nextEach) {
       var opts = _.merge(options, config);
       resize(opts, nextEach);
     }, function(err) {
