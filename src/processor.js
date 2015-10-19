@@ -10,7 +10,7 @@ module.exports = {
   process: function(options, next) {
     var input = null;
     if (!options.config) {
-      input = loadJSONfile('./printprep.config.json');
+      input = loadJSONfile(path.normalize('./printprep.config.json'));
     } else {
       input = loadJSONfile(options.config);
     }
@@ -123,7 +123,7 @@ function resize(options, next) {
 
     var filenames = fs.readdirSync(options.source);
     _.each(filenames, function(filename) {
-      if (!(/(^|\/)\.[^\/\.]/g).test(filename)) {
+      if (!(/(^|\/)\.[^\/\.]/g).test(filename) && filename !== 'empty') {
         files.push({
           source: path.normalize(options.source + '/' + filename),
           output: path.normalize(options.output + '/' + filename)
