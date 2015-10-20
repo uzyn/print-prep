@@ -26,6 +26,8 @@ module.exports = {
       configs.push(options);
     }
 
+    console.log('configs: ', configs);
+
     async.eachSeries(configs, function(config, nextEach) {
       var opts = _.merge(options, config);
       resize(opts, nextEach);
@@ -94,10 +96,12 @@ function resize(options, next) {
     return next('Missing source and/or output');
   }
 
-  options.color = options.color || 'white';
+  // TODO: Create a default variable
+
   options.ratio = options.ratio || '3:2';
   options.normalize = options.normalize || false;
   options.position = options.position || 'right';
+  options.background.color = options.background.color || options.color || 'white';
   var ratio = parseRatio(options.ratio);
 
   if (!ratio) {
@@ -171,20 +175,24 @@ function resize(options, next) {
           size.intWidth = size.width;
           size.intHeight = (2 * size.height) - meta.height;
         }
-        console.log(ratio);
-        console.log(size);
+        // console.log(ratio);
+        // console.log(size);
         size = normalizeSize(size);
         console.log(size);
 
-        var conv = sharp(file.source)
-          .rotate();
+        var conv = sharp(file.source).rotate();
         if (!landscape) {
           conv.rotate(270);
         }
-        conv
-          .background(rgb(options.color))
-          .embed()
-          .resize(size.intWidth, size.intHeight);
+
+        conv.background(rgb(options.background.color))
+
+        if (options.background.image) {
+          // TODO: Error: Overlay image must have same dimensions as resized image
+          conv.overlayWith(options.background.image.path);
+        }
+
+        conv.embed().resize(size.intWidth, size.intHeight);
 
         switch(options.position) {
           case 'left':

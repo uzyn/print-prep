@@ -31,7 +31,7 @@
     "lodash": "^3.9.3",
     "nopt": "^3.0.3",
     "rgb": "^0.1.0",
-    "sharp": "^0.10.1"
+    "sharp": "^0.11.3"
   },
   "devDependencies": {
     "chai": "^3.3.0"
