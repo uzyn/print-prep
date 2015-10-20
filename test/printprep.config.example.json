@@ -1,0 +1,12 @@
+[
+  {
+    "source": "./originals",
+    "output": "./preprocess",
+    "position": "center"
+  },
+  {
+    "source": "./preprocess",
+    "output": "./output",
+    "position": "right"
+  }
+]
