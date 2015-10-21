@@ -154,7 +154,7 @@ function resize(options, next) {
       },
       function(meta, callback) {
         // Always continue without background imge
-        return callback(null, meta);
+        // return callback(null, meta);
 
         if (!options.background.image) {
           return callback(null, meta);
@@ -174,6 +174,8 @@ function resize(options, next) {
         }
         size = normalizeSize(size);
 
+        console.log('Normalize size: ', size);
+
         sharp(options.background.image.path)
           .metadata(function(err, metaBackground) {
             var resizeWidth = Math.round(metaBackground.width * options.background.image.scale.width);
@@ -182,35 +184,20 @@ function resize(options, next) {
             var paintFilename = 'paint.' + metaBackground.format;
             var paint = sharp(options.background.image.path)
               .resize(resizeWidth, resizeHeight)
+              .quality(100)
               .toFile(paintFilename, function(err, paintInfo) {
+                console.log('Resize BG image: ', err, paintInfo);
 
-                console.log(paintInfo);
-
-                // var emptyBackground = sharp('3.jpg')
-                //   .background(rgb(options.background.color))
-                //   .toFile('empty-background.jpg', function(err, emptyBackgroundInfo) {
-                //     gm('empty-background.jpg')
-                //       // .resize(size.intWidth, size.intHeight)
-                //       .tile(paintFilename)
-                //       .write('tiled.jpg', function (err) {
-                //         if (!err) console.log('done');
-                //       });
-                //   });
-
-                var background = gm(size.intWidth, size.intHeight, '#FFF');
-
-                var currentWitdh = 0;
-                var currentHeight = 0;
-
-                for (var i)
-
+                var background = gm(size.width, size.height, '#FFF')
                   .in('-page', '+0+0')
                   .in(paintFilename)
                   // .in('-page', '+' + size.intWidth + '+0')
                   // .in(paintFilename)
                   .mosaic()
+                  .setFormat('jpg')
                   .write('tiled.jpg', function (err) {
-                    if (!err) console.log('done');
+                    if (err) console.log('err: ', err);
+                    return callback(null, meta);
                   });
               });
           });
@@ -241,21 +228,24 @@ function resize(options, next) {
         // console.log(ratio);
         // console.log(size);
         size = normalizeSize(size);
-        // console.log(size);
+        console.log('Normalize size: ', size);
 
         var conv = sharp(file.source).rotate();
         if (!landscape) {
           conv.rotate(270);
         }
 
-        conv.background(rgb(options.background.color))
+        conv
+          .background(rgb('transparent'))
+          .embed()
+          .resize(size.intWidth, size.intHeight)
+          .quality(100);
 
         // if (options.background.image) {
         //   // TODO: Error: Overlay image must have same dimensions as resized image
-        //   // conv.overlayWith(options.background.image.path);
+        //   conv.overlayWith('tiled.jpg');
         // }
 
-        conv.embed().resize(size.intWidth, size.intHeight);
 
         switch(options.position) {
           case 'left':
@@ -272,14 +262,30 @@ function resize(options, next) {
             break;
         }
 
-        conv.quality(100);
-
         if (options.normalize) {
           conv.normalize();
         }
 
-        conv.toFile(file.output, function(err) {
-          callback(err);
+        conv.jpeg();
+        conv.toFile(file.output, function(err, x) {
+          console.log('x: ', x);
+          if (options.background.image) {
+            // sharp('tiled.jpg')
+            //   .overlayWith(file.output)
+            //   .jpeg()
+            //   .toFile('final.jpg', function(err, f) {
+            //     console.log('final::', err, f);
+            //     callback(err);
+            //   });
+            gm(file.output)
+              .clip()
+              .mask('tiled.jpg')
+              .write('final.jpg', function(err, a) {
+                console.log('a::', a);
+                callback(err);
+              });
+          }
+
         });
       }
     ], function(err, result) {
