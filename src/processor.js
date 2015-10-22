@@ -3,7 +3,6 @@ var _ = require('lodash');
 var fs = require('fs');
 var path = require('path');
 var sharp = require('sharp');
-var gm = require('gm');
 var async = require('async');
 var rgb = require('rgb');
 
@@ -150,57 +149,6 @@ function resize(options, next) {
       function(callback) {
         sharp(file.source).metadata(callback);
       },
-      // TODO: DEPRECATED
-      function(meta, callback) {
-        // Always continue without background imge
-        return callback(null, meta);
-
-        if (!options.background.image) {
-          return callback(null, meta);
-        }
-
-        var size = {};
-        if (ratio.width * meta.height > ratio.height * meta.width) {
-          size.height = meta.height;
-          size.width = size.height / ratio.height * ratio.width;
-          size.intHeight = size.height;
-          size.intWidth = (2 * size.width) - meta.width;
-        } else {
-          size.width = meta.width;
-          size.height = size.width / ratio.width * ratio.height;
-          size.intWidth = size.width;
-          size.intHeight = (2 * size.height) - meta.height;
-        }
-        size = normalizeSize(size);
-
-        console.log('Normalize size: ', size);
-
-        sharp(options.background.image.path)
-          .metadata(function(err, metaBackground) {
-            var resizeWidth = Math.round(metaBackground.width * options.background.image.scale.width);
-            var resizeHeight = Math.round(metaBackground.height * options.background.image.scale.height);
-
-            var paintFilename = 'paint.' + metaBackground.format;
-            var paint = sharp(options.background.image.path)
-              .resize(resizeWidth, resizeHeight)
-              .quality(100)
-              .toFile(paintFilename, function(err, paintInfo) {
-                console.log('Resize BG image: ', err, paintInfo);
-
-                var background = gm(size.width, size.height, '#FFF')
-                  .in('-page', '+0+0')
-                  .in(paintFilename)
-                  // .in('-page', '+' + size.intWidth + '+0')
-                  // .in(paintFilename)
-                  .mosaic()
-                  .setFormat('jpg')
-                  .write('tiled.jpg', function (err) {
-                    if (err) console.log('err: ', err);
-                    return callback(null, meta);
-                  });
-              });
-          });
-      },
 
       function(meta, callback) {
         var landscape = isLandscape(meta);
@@ -241,11 +189,10 @@ function resize(options, next) {
         var resizedBackgroundFilename = 'resized-' + options.background;
 
         sharp(options.background)
+          .background(rgb(options.color))
           .resize(size.intWidth, size.intHeight)
           .max()
           .quality(100)
-          .png()
-          .toFormat(sharp.format.png)
           .toFile(resizedBackgroundFilename, function(err, resizedBackground) {
             options.resizedBackground = resizedBackgroundFilename;
             callback(err, meta, landscape, size);
@@ -259,8 +206,6 @@ function resize(options, next) {
         }
 
         conv
-          // .background(rgb(options.color))
-          // .background(rgb('transparent'))
           .embed()
           .resize(size.intWidth, size.intHeight)
           .quality(100);
