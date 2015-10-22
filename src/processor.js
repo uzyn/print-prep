@@ -235,9 +235,7 @@ function resize(options, next) {
           conv.toFormat(sharp.format.jpeg);
           conv.toFile(file.output, callback);
         } else {
-          // var ts = new Date().getTime();
           conv.background(rgb('transparent'));
-          conv.png();
           conv.toFormat(sharp.format.png);
           conv.toFile('uncombined.png', function(err) {
             async.series([
@@ -247,9 +245,7 @@ function resize(options, next) {
                   .sharpen()
                   .png()
                   .toFormat(sharp.format.png)
-                  .toFile('combined.png', function(err) {
-                    nextStep(err);
-                  });
+                  .toFile('combined.png', nextStep);
               },
               function(nextStep) {
                 sharp('combined.png')
@@ -257,9 +253,7 @@ function resize(options, next) {
                   .quality(100)
                   .jpeg()
                   .toFormat(sharp.format.jpeg)
-                  .toFile(file.output, function(err) {
-                    nextStep(err);
-                  });
+                  .toFile(file.output, nextStep);
               }
             ], function(err) {
               callback(err);
