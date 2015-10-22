@@ -242,9 +242,9 @@ function resize(options, next) {
 
         sharp(options.background)
           .resize(size.intWidth, size.intHeight)
-          .sharpen()
           .quality(100)
           .png()
+          .toFormat(sharp.format.png)
           .toFile(resizedBackgroundFilename, function(err, resizedBackground) {
             options.resizedBackground = resizedBackgroundFilename;
             callback(err, meta, landscape, size);
@@ -258,19 +258,11 @@ function resize(options, next) {
         }
 
         conv
-          //.background(rgb(options.color))
+          // .background(rgb(options.color))
+          // .background(rgb('transparent'))
           .embed()
           .resize(size.intWidth, size.intHeight)
           .quality(100);
-
-        if (options.resizedBackground) {
-          // conv.background(rgb(options.color))
-          conv.flatten();
-          // TODO: Error: Overlay image must have same dimensions as resized image
-          conv.overlayWith(options.resizedBackground);
-          conv.sharpen();
-        }
-
 
         switch(options.position) {
           case 'left':
@@ -291,11 +283,43 @@ function resize(options, next) {
           conv.normalize();
         }
 
-        conv.jpeg();
-        conv.toFile(file.output, function(err, x) {
-          console.log('x: ', x);
-          callback(err);
-        });
+        if (!options.resizedBackground) {
+          conv.background(rgb(options.color));
+          conv.jpeg();
+          conv.toFormat(sharp.format.jpeg);
+          conv.toFile(file.output, callback);
+        } else {
+          // var ts = new Date().getTime();
+          conv.background(rgb('transparent'));
+          conv.png();
+          conv.toFormat(sharp.format.png);
+          conv.toFile('uncombined.png', function(err) {
+            async.series([
+              function(nextStep) {
+                sharp(options.resizedBackground)
+                  .overlayWith('uncombined.png')
+                  .sharpen()
+                  .png()
+                  .toFormat(sharp.format.png)
+                  .toFile('combined.png', function(err) {
+                    nextStep(err);
+                  });
+              },
+              function(nextStep) {
+                sharp('combined.png')
+                  .flatten()
+                  .quality(100)
+                  .jpeg()
+                  .toFormat(sharp.format.jpeg)
+                  .toFile(file.output, function(err) {
+                    nextStep(err);
+                  });
+              }
+            ], function(err) {
+              callback(err);
+            });
+          });
+        }
       }
     ], function(err, result) {
       return nextEach(err);
