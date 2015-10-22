@@ -7,6 +7,8 @@ var sharp = require('sharp');
 var async = require('async');
 var rgb = require('rgb');
 
+var caches = {};
+
 module.exports = {
   process: function(options, next) {
     var input = null;
@@ -185,19 +187,23 @@ function resize(options, next) {
           return callback(null, meta, landscape, size, null);
         }
 
-        var start = new Date().getTime();
-        console.log('Start background resize: ', start);
+        var idx = [options.background, rgb(options.color), size.intWidth, size.intHeight].join('-');
 
+        if (caches[idx]) {
+          return callback(null, meta, landscape, size, caches[idx]);
+        }
+
+        var start = new Date().getTime();
         sharp(options.background)
           .background(rgb(options.color))
           .resize(size.intWidth, size.intHeight)
           .max()
           .quality(100)
           .toBuffer(function(err, buffer, info) {
+            caches[idx] = buffer;
 
             var end = new Date().getTime();
-            console.log('End background resize: ', end);
-            console.log('Use time (ms): ', end - start);
+            console.log('Resize background use time (ms): ', end - start);
             callback(err, meta, landscape, size, buffer);
           });
       },
