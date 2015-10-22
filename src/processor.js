@@ -242,6 +242,7 @@ function resize(options, next) {
 
         sharp(options.background)
           .resize(size.intWidth, size.intHeight)
+          .max()
           .quality(100)
           .png()
           .toFormat(sharp.format.png)
