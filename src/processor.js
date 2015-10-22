@@ -2,6 +2,7 @@
 var _ = require('lodash');
 var fs = require('fs');
 var path = require('path');
+var crypto = require('crypto');
 var sharp = require('sharp');
 var async = require('async');
 var rgb = require('rgb');
@@ -184,12 +185,19 @@ function resize(options, next) {
           return callback(null, meta, landscape, size, null);
         }
 
+        var start = new Date().getTime();
+        console.log('Start background resize: ', start);
+
         sharp(options.background)
           .background(rgb(options.color))
           .resize(size.intWidth, size.intHeight)
           .max()
           .quality(100)
           .toBuffer(function(err, buffer, info) {
+
+            var end = new Date().getTime();
+            console.log('End background resize: ', end);
+            console.log('Use time (ms): ', end - start);
             callback(err, meta, landscape, size, buffer);
           });
       },
@@ -228,18 +236,20 @@ function resize(options, next) {
           conv.background(rgb(options.color));
           conv.toFile(file.output, callback);
         } else {
+          var tmpFilename = crypto.randomBytes(Math.ceil(12 / 2)).toString('hex').slice(0, 12) + '.png';
+
           conv.background(rgb('transparent'));
           conv.toFormat(sharp.format.png);
-          conv.toFile('printprep.tmp.png', function(err) {
+          conv.toFile(tmpFilename, function(err) {
 
             async.waterfall([
               function(nextStep) {
                 sharp(resizedBackground)
-                  .overlayWith('printprep.tmp.png') // overlayWith() not support buffer yet
+                  .overlayWith(tmpFilename) // overlayWith() not support buffer yet
                   .sharpen()
                   .toFormat(sharp.format.png)
                   .toBuffer(function(err, buffer, info) {
-                    fs.unlinkSync('printprep.tmp.png');
+                    fs.unlinkSync(tmpFilename);
                     nextStep(err, buffer);
                   });
               },
