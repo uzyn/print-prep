@@ -27,8 +27,6 @@ module.exports = {
       configs.push(options);
     }
 
-    console.log('configs: ', configs);
-
     async.eachSeries(configs, function(config, nextEach) {
       var opts = _.merge(options, config);
       resize(opts, nextEach);
@@ -98,11 +96,11 @@ function resize(options, next) {
   }
 
   // TODO: Create a default variable
-
   options.ratio = options.ratio || '3:2';
   options.normalize = options.normalize || false;
   options.position = options.position || 'right';
-  options.background.color = options.background.color || options.color || 'white';
+  options.background = options.background || null;
+  options.color = options.color || 'white';
   var ratio = parseRatio(options.ratio);
 
   if (!ratio) {
@@ -152,9 +150,10 @@ function resize(options, next) {
       function(callback) {
         sharp(file.source).metadata(callback);
       },
+      // TODO: DEPRECATED
       function(meta, callback) {
         // Always continue without background imge
-        // return callback(null, meta);
+        return callback(null, meta);
 
         if (!options.background.image) {
           return callback(null, meta);
@@ -225,26 +224,52 @@ function resize(options, next) {
           size.intWidth = size.width;
           size.intHeight = (2 * size.height) - meta.height;
         }
+
         // console.log(ratio);
         // console.log(size);
         size = normalizeSize(size);
         console.log('Normalize size: ', size);
 
+        callback(null, meta, landscape, size);
+      },
+
+      function(meta, landscape, size, callback) {
+        if (!options.background) {
+          return callback(null, meta, landscape, size);
+        }
+
+        var resizedBackgroundFilename = 'resized-' + options.background;
+
+        sharp(options.background)
+          .resize(size.intWidth, size.intHeight)
+          .sharpen()
+          .quality(100)
+          .png()
+          .toFile(resizedBackgroundFilename, function(err, resizedBackground) {
+            options.resizedBackground = resizedBackgroundFilename;
+            callback(err, meta, landscape, size);
+          });
+      },
+
+      function(meta, landscape, size, callback) {
         var conv = sharp(file.source).rotate();
         if (!landscape) {
           conv.rotate(270);
         }
 
         conv
-          .background(rgb('transparent'))
+          //.background(rgb(options.color))
           .embed()
           .resize(size.intWidth, size.intHeight)
           .quality(100);
 
-        // if (options.background.image) {
-        //   // TODO: Error: Overlay image must have same dimensions as resized image
-        //   conv.overlayWith('tiled.jpg');
-        // }
+        if (options.resizedBackground) {
+          // conv.background(rgb(options.color))
+          conv.flatten();
+          // TODO: Error: Overlay image must have same dimensions as resized image
+          conv.overlayWith(options.resizedBackground);
+          conv.sharpen();
+        }
 
 
         switch(options.position) {
@@ -269,23 +294,7 @@ function resize(options, next) {
         conv.jpeg();
         conv.toFile(file.output, function(err, x) {
           console.log('x: ', x);
-          if (options.background.image) {
-            // sharp('tiled.jpg')
-            //   .overlayWith(file.output)
-            //   .jpeg()
-            //   .toFile('final.jpg', function(err, f) {
-            //     console.log('final::', err, f);
-            //     callback(err);
-            //   });
-            gm(file.output)
-              .clip()
-              .mask('tiled.jpg')
-              .write('final.jpg', function(err, a) {
-                console.log('a::', a);
-                callback(err);
-              });
-          }
-
+          callback(err);
         });
       }
     ], function(err, result) {
