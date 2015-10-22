@@ -173,33 +173,28 @@ function resize(options, next) {
           size.intHeight = (2 * size.height) - meta.height;
         }
 
-        // console.log(ratio);
-        // console.log(size);
         size = normalizeSize(size);
-        console.log('Normalize size: ', size);
+        console.log('Normalize: ', size);
 
         callback(null, meta, landscape, size);
       },
 
       function(meta, landscape, size, callback) {
         if (!options.background) {
-          return callback(null, meta, landscape, size);
+          return callback(null, meta, landscape, size, null);
         }
-
-        var resizedBackgroundFilename = 'resized-' + options.background;
 
         sharp(options.background)
           .background(rgb(options.color))
           .resize(size.intWidth, size.intHeight)
           .max()
           .quality(100)
-          .toFile(resizedBackgroundFilename, function(err, resizedBackground) {
-            options.resizedBackground = resizedBackgroundFilename;
-            callback(err, meta, landscape, size);
+          .toBuffer(function(err, buffer, info) {
+            callback(err, meta, landscape, size, buffer);
           });
       },
 
-      function(meta, landscape, size, callback) {
+      function(meta, landscape, size, resizedBackground, callback) {
         var conv = sharp(file.source).rotate();
         if (!landscape) {
           conv.rotate(270);
@@ -229,30 +224,30 @@ function resize(options, next) {
           conv.normalize();
         }
 
-        if (!options.resizedBackground) {
+        if (!resizedBackground) {
           conv.background(rgb(options.color));
-          conv.jpeg();
-          conv.toFormat(sharp.format.jpeg);
           conv.toFile(file.output, callback);
         } else {
           conv.background(rgb('transparent'));
           conv.toFormat(sharp.format.png);
-          conv.toFile('uncombined.png', function(err) {
-            async.series([
+          conv.toFile('printprep.tmp.png', function(err) {
+
+            async.waterfall([
               function(nextStep) {
-                sharp(options.resizedBackground)
-                  .overlayWith('uncombined.png')
+                sharp(resizedBackground)
+                  .overlayWith('printprep.tmp.png') // overlayWith() not support buffer yet
                   .sharpen()
-                  .png()
                   .toFormat(sharp.format.png)
-                  .toFile('combined.png', nextStep);
+                  .toBuffer(function(err, buffer, info) {
+                    fs.unlinkSync('printprep.tmp.png');
+                    nextStep(err, buffer);
+                  });
               },
-              function(nextStep) {
-                sharp('combined.png')
+
+              function(combinedImage, nextStep) {
+                sharp(combinedImage)
                   .flatten()
                   .quality(100)
-                  .jpeg()
-                  .toFormat(sharp.format.jpeg)
                   .toFile(file.output, nextStep);
               }
             ], function(err) {
@@ -260,6 +255,7 @@ function resize(options, next) {
             });
           });
         }
+
       }
     ], function(err, result) {
       return nextEach(err);
