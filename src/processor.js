@@ -103,6 +103,8 @@ function resize(options, next) {
   options.position = options.position || 'right';
   options.background = options.background || null;
   options.color = options.color || 'white';
+  options.fillup = options.fillup || false;
+
   var ratio = parseRatio(options.ratio);
 
   if (!ratio) {
@@ -187,6 +189,10 @@ function resize(options, next) {
           return callback(null, meta, landscape, size, null);
         }
 
+        if (options.fillup) {
+          return callback(null, meta, landscape, size, null);
+        }
+
         var idx = [options.background, rgb(options.color), size.intWidth, size.intHeight].join('-');
 
         if (caches[idx]) {
@@ -216,22 +222,26 @@ function resize(options, next) {
 
         conv
           .embed()
-          .resize(size.intWidth, size.intHeight)
-          .quality(100);
+          .quality(100)
+          .resize(size.intWidth, size.intHeight);
 
-        switch(options.position) {
-          case 'left':
-            conv.extract(0, size.intWidth - size.width, size.width, size.height);
-            break;
+        if (!options.fillup) {
+          switch(options.position) {
+            case 'left':
+              conv.extract(0, size.intWidth - size.width, size.width, size.height);
+              break;
 
-          case 'center':
-            conv.extract(0, Math.round((size.intWidth - size.width) / 2), size.width, size.height);
-            break;
+            case 'center':
+              conv.extract(0, Math.round((size.intWidth - size.width) / 2), size.width, size.height);
+              break;
 
-          case 'right':
-          default:
-            conv.extract(0, 0, size.width, size.height);
-            break;
+            case 'right':
+            default:
+              conv.extract(0, 0, size.width, size.height);
+              break;
+          }
+        } else {
+          conv.crop(sharp.gravity.center);
         }
 
         if (options.normalize) {
