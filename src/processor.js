@@ -133,7 +133,7 @@ function resize(options, next) {
 
     var filenames = fs.readdirSync(options.source);
     _.each(filenames, function(filename) {
-      if (!(/(^|\/)\.[^\/\.]/g).test(filename) && filename !== 'empty') {
+      if (!(/(^|\/)\.[^\/\.]/g).test(filename) && filename !== 'printprep.config.json' && filename !== 'empty') {
         files.push({
           source: path.normalize(options.source + '/' + filename),
           output: path.normalize(options.output + '/' + filename)
