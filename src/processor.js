@@ -15,7 +15,8 @@ var defaultOptions = {
   position: 'right',
   background: null,
   color: 'white',
-  fillup: false
+  fillup: false,
+  ext: ['png', 'jpg', 'jpeg', 'tiff']
 };
 
 module.exports = {
@@ -40,7 +41,9 @@ module.exports = {
 
     async.eachSeries(configs, function(config, nextEach) {
       var opts = _.merge(_.clone(defaultOptions), config);
-      resize(opts, nextEach);
+      resize(opts, function(err) {
+        nextEach(err);
+      });
     }, function(err) {
       console.log(err);
       return next(err);
@@ -106,14 +109,7 @@ function resize(options, next) {
     return next('Missing source and/or output');
   }
 
-  // TODO: Create a default variable
-  options.ratio = options.ratio || '3:2';
-  options.ext = splitStringExt(options.ext) || ['png', 'jpg', 'jpeg', 'tiff']
-  options.normalize = options.normalize || false;
-  options.position = options.position || 'right';
-  options.background = options.background || null;
-  options.color = options.color || 'white';
-  options.fillup = options.fillup || false;
+  options.ext = splitStringExt(options.ext);
 
   var ratio = parseRatio(options.ratio);
 
@@ -143,30 +139,30 @@ function resize(options, next) {
 
     var filenames = fs.readdirSync(options.source);
     _.each(filenames, function(filename) {
-      if ((!(/(^|\/)\.[^\/\.]/g).test(filename) &&
-        filename !== 'empty') &&
-        (_.indexOf(options.ext, removeDot(path.extname(filename))) >= 0)
-      ) {
-        files.push({
-          source: path.normalize(options.source + '/' + filename),
-          output: path.normalize(options.output + '/' + filename)
-        });
-      } else {
-        return next("Bad file");
+      if (_.indexOf(options.ext, removeDot(path.extname(filename))) !== -1) {
+        // EXPLAIN: ignore root path (e.g: ./)
+        if (!(/(^|\/)\.[^\/\.]/g).test(filename)) {
+          files.push({
+            source: path.normalize(options.source + '/' + filename),
+            output: path.normalize(options.output + '/' + filename)
+          });
+        }
       }
     });
   }
 
   if (sourceStat.isFile()) {
     var filename = path.basename(options.source);
-    if (_.indexOf(options.ext, removeDot(path.extname(filename))) >= 0) {
+    if (_.indexOf(options.ext, removeDot(path.extname(filename))) !== -1) {
       files.push({
         source: options.source,
         output: options.output
       });
-    } else {
-      return next("Bad file");
     }
+  }
+
+  if (_.isEmpty(files)) {
+    return next('No photos found.');
   }
 
   async.each(files, function(file, nextEach) {
@@ -330,7 +326,7 @@ function normalizeSize(size, cap) {
 
 
 function removeDot(ext) {
-  if (ext.charAt(0) === ".") {
+  if (ext.charAt(0) === '.') {
     ext = ext.substr(1);
   }
   return ext;
@@ -338,6 +334,6 @@ function removeDot(ext) {
 
 function splitStringExt(extString) {
   var ext = []
-  ext = extString[0].split(",");
+  ext = extString[0].split(',');
   return ext;
 }
