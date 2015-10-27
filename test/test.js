@@ -95,8 +95,8 @@ describe('Convert single file', function() {
         }
       }, function(err, data) {
         assert.isNull(err, err);
-        assert.isAbove(data.output.width, data.original.width - 1, 'Output width must greater or equal than original');
-        assert.isAbove(data.output.height, data.original.height - 1, 'Output height must greater or equal than original');
+        assert.isAbove(data.output.width, data.original.width - 1, 'Output width must be greater than or equal to original');
+        assert.isAbove(data.output.height, data.original.height - 1, 'Output height must be greater than or equal to original');
         done();
       });
     });
@@ -111,9 +111,9 @@ describe('Convert multiple files', function() {
     cleanOutput(done);
   });
 
-  it('source is directory but output is file.', function(done) {
+  it('source is directory but output is file should throw error', function(done) {
     exec('printprep ' + originalPath() + ' ' + outputPath('a-file.jpg'), function(err) {
-      assert.isNotNull(err, 'Output must is a directory');
+      assert.isNotNull(err, 'Output must be a directory');
       done();
     });
   });
@@ -137,7 +137,7 @@ describe('Convert multiple files', function() {
           }
         }, function(err, data) {
           assert.isNull(err, err);
-          assert.notEqual(data.output.width, data.original.width, 'Output ' + filename + ' width must not equal to original');
+          assert.notEqual(data.output.width, data.original.width, 'Output ' + filename + ' width must not be equal to the original');
           nextFile();
         });
       }, function() {
