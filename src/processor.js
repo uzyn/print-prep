@@ -127,15 +127,17 @@ function resize(options, next) {
 
     var filenames = fs.readdirSync(options.source);
     _.each(filenames, function(filename) {
-      if (!(/(^|\/)\.[^\/\.]/g).test(filename) &&
-        filename !== 'empty' &&
-        _.indexOf(options.ext, removeDot(path.extname(filename))) >= 0
+      if ((!(/(^|\/)\.[^\/\.]/g).test(filename) &&
+        filename !== 'empty') &&
+        (_.indexOf(options.ext, removeDot(path.extname(filename))) >= 0)
       ) {
 
         files.push({
           source: path.normalize(options.source + '/' + filename),
           output: path.normalize(options.output + '/' + filename)
         });
+      } else {
+        return next("Bad file");
       }
     });
   }
