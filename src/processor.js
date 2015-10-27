@@ -96,6 +96,7 @@ function resize(options, next) {
 
   options.color = options.color || 'white';
   options.ratio = options.ratio || '3:2';
+  options.ext = splitStringExt(options.ext) || ['png', 'jpg', 'jpeg', 'tiff']
   options.normalize = options.normalize || false;
   options.position = options.position || 'right';
   var ratio = parseRatio(options.ratio);
@@ -126,7 +127,11 @@ function resize(options, next) {
 
     var filenames = fs.readdirSync(options.source);
     _.each(filenames, function(filename) {
-      if (!(/(^|\/)\.[^\/\.]/g).test(filename) && filename !== 'empty') {
+      if (!(/(^|\/)\.[^\/\.]/g).test(filename) &&
+        filename !== 'empty' &&
+        _.indexOf(options.ext, removeDot(path.extname(filename))) >= 0
+      ) {
+
         files.push({
           source: path.normalize(options.source + '/' + filename),
           output: path.normalize(options.output + '/' + filename)
@@ -136,10 +141,15 @@ function resize(options, next) {
   }
 
   if (sourceStat.isFile()) {
-    files.push({
-      source: options.source,
-      output: options.output
-    });
+    var filename = path.basename(options.source);
+    if (_.indexOf(options.ext, removeDot(path.extname(filename))) >= 0) {
+      files.push({
+        source: options.source,
+        output: options.output
+      });
+    } else {
+      return next("Bad file");
+    }
   }
 
   async.each(files, function(file, nextEach) {
@@ -236,4 +246,18 @@ function normalizeSize(size, cap) {
     size[key] = parseInt(value * scale);
   });
   return size;
+}
+
+
+function removeDot(ext) {
+  if (ext.charAt(0) === ".") {
+    ext = ext.substr(1);
+  }
+  return ext;
+}
+
+function splitStringExt(extString) {
+  var ext = []
+  ext = extString[0].split(",");
+  return ext;
 }
