@@ -19,7 +19,8 @@ var shortHands = {
   r: ['--ratio'],
   e: ['--ext'],
   n: ['--normalize'],
-  i: ['--config']
+  i: ['--config'],
+  b: ['--background']
 };
 var options = nopt(knownOptions, shortHands);
 console.log(options);

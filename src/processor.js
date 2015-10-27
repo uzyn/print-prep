@@ -2,9 +2,21 @@
 var _ = require('lodash');
 var fs = require('fs');
 var path = require('path');
+var crypto = require('crypto');
 var sharp = require('sharp');
 var async = require('async');
 var rgb = require('rgb');
+
+var caches = {};
+
+var defaultOptions = {
+  ratio: '3:2',
+  normalize: false,
+  position: 'right',
+  background: null,
+  color: 'white',
+  fillup: false
+};
 
 module.exports = {
   process: function(options, next) {
@@ -27,7 +39,7 @@ module.exports = {
     }
 
     async.eachSeries(configs, function(config, nextEach) {
-      var opts = _.merge(options, config);
+      var opts = _.merge(_.clone(defaultOptions), config);
       resize(opts, nextEach);
     }, function(err) {
       console.log(err);
@@ -94,11 +106,15 @@ function resize(options, next) {
     return next('Missing source and/or output');
   }
 
-  options.color = options.color || 'white';
+  // TODO: Create a default variable
   options.ratio = options.ratio || '3:2';
   options.ext = splitStringExt(options.ext) || ['png', 'jpg', 'jpeg', 'tiff']
   options.normalize = options.normalize || false;
   options.position = options.position || 'right';
+  options.background = options.background || null;
+  options.color = options.color || 'white';
+  options.fillup = options.fillup || false;
+
   var ratio = parseRatio(options.ratio);
 
   if (!ratio) {
@@ -131,7 +147,6 @@ function resize(options, next) {
         filename !== 'empty') &&
         (_.indexOf(options.ext, removeDot(path.extname(filename))) >= 0)
       ) {
-
         files.push({
           source: path.normalize(options.source + '/' + filename),
           output: path.normalize(options.output + '/' + filename)
@@ -159,9 +174,8 @@ function resize(options, next) {
       function(callback) {
         sharp(file.source).metadata(callback);
       },
-      function(meta, callback) {
-        console.log(meta);
 
+      function(meta, callback) {
         var landscape = isLandscape(meta);
 
         if (!landscape) {
@@ -183,45 +197,110 @@ function resize(options, next) {
           size.intWidth = size.width;
           size.intHeight = (2 * size.height) - meta.height;
         }
-        console.log(ratio);
-        console.log(size);
-        size = normalizeSize(size);
-        console.log(size);
 
-        var conv = sharp(file.source)
-          .rotate();
+        size = normalizeSize(size);
+        console.log('Normalize: ', size);
+
+        callback(null, meta, landscape, size);
+      },
+
+      function(meta, landscape, size, callback) {
+        if (!options.background) {
+          return callback(null, meta, landscape, size, null);
+        }
+
+        if (options.fillup) {
+          return callback(null, meta, landscape, size, null);
+        }
+
+        var idx = [options.background, rgb(options.color), size.intWidth, size.intHeight].join('-');
+
+        if (caches[idx]) {
+          return callback(null, meta, landscape, size, caches[idx]);
+        }
+
+        var start = new Date().getTime();
+        sharp(options.background)
+          .background(rgb(options.color))
+          .resize(size.intWidth, size.intHeight)
+          .max()
+          .quality(100)
+          .toBuffer(function(err, buffer, info) {
+            caches[idx] = buffer;
+
+            var end = new Date().getTime();
+            console.log('Resize background use time (ms): ', end - start);
+            callback(err, meta, landscape, size, buffer);
+          });
+      },
+
+      function(meta, landscape, size, resizedBackground, callback) {
+        var conv = sharp(file.source).rotate();
         if (!landscape) {
           conv.rotate(270);
         }
+
         conv
-          .background(rgb(options.color))
           .embed()
+          .quality(100)
           .resize(size.intWidth, size.intHeight);
 
-        switch(options.position) {
-          case 'left':
-            conv.extract(0, size.intWidth - size.width, size.width, size.height);
-            break;
+        if (!options.fillup) {
+          switch(options.position) {
+            case 'left':
+              conv.extract(0, size.intWidth - size.width, size.width, size.height);
+              break;
 
-          case 'center':
-            conv.extract(0, Math.round((size.intWidth - size.width) / 2), size.width, size.height);
-            break;
+            case 'center':
+              conv.extract(0, Math.round((size.intWidth - size.width) / 2), size.width, size.height);
+              break;
 
-          case 'right':
-          default:
-            conv.extract(0, 0, size.width, size.height);
-            break;
+            case 'right':
+            default:
+              conv.extract(0, 0, size.width, size.height);
+              break;
+          }
+        } else {
+          conv.crop(sharp.gravity.center);
         }
-
-        conv.quality(100);
 
         if (options.normalize) {
           conv.normalize();
         }
 
-        conv.toFile(file.output, function(err) {
-          callback(err);
-        });
+        if (!resizedBackground) {
+          conv.background(rgb(options.color));
+          conv.toFile(file.output, callback);
+        } else {
+          var tmpFilename = crypto.randomBytes(Math.ceil(12 / 2)).toString('hex').slice(0, 12) + '.png';
+
+          conv.background(rgb('transparent'));
+          conv.toFormat(sharp.format.png);
+          conv.toFile(tmpFilename, function(err) {
+            async.waterfall([
+              function(nextStep) {
+                sharp(resizedBackground)
+                  .overlayWith(tmpFilename) // overlayWith() not support buffer yet
+                  .sharpen()
+                  .toFormat(sharp.format.png)
+                  .toBuffer(function(err, buffer, info) {
+                    fs.unlinkSync(tmpFilename);
+                    nextStep(err, buffer);
+                  });
+              },
+
+              function(combinedImage, nextStep) {
+                sharp(combinedImage)
+                  .flatten()
+                  .quality(100)
+                  .toFile(file.output, nextStep);
+              }
+            ], function(err) {
+              callback(err);
+            });
+          });
+        }
+
       }
     ], function(err, result) {
       return nextEach(err);
@@ -230,7 +309,6 @@ function resize(options, next) {
     return next(err);
   });
 }
-
 
 /**
  * Normalize size to prevent overflow
