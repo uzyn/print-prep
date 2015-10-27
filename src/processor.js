@@ -109,7 +109,7 @@ function resize(options, next) {
     return next('Missing source and/or output');
   }
 
-  options.ext = splitStringExt(options.ext);
+  options.ext = splitComma(options.ext);
 
   var ratio = parseRatio(options.ratio);
 
@@ -332,8 +332,9 @@ function removeDot(ext) {
   return ext;
 }
 
-function splitStringExt(extString) {
-  var ext = []
-  ext = extString[0].split(',');
-  return ext;
+function splitComma(exts) {
+  if (!_.isString(exts)) {
+    return exts;
+  }
+  return exts.split(',');
 }
