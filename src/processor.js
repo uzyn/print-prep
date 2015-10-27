@@ -9,6 +9,15 @@ var rgb = require('rgb');
 
 var caches = {};
 
+var defaultOptions = {
+  ratio: '3:2',
+  normalize: false,
+  position: 'right',
+  background: null,
+  color: 'white',
+  fillup: false
+};
+
 module.exports = {
   process: function(options, next) {
     var input = null;
@@ -30,7 +39,7 @@ module.exports = {
     }
 
     async.eachSeries(configs, function(config, nextEach) {
-      var opts = _.merge(options, config);
+      var opts = _.merge(_.clone(defaultOptions), config);
       resize(opts, nextEach);
     }, function(err) {
       console.log(err);
@@ -260,7 +269,6 @@ function resize(options, next) {
           conv.background(rgb('transparent'));
           conv.toFormat(sharp.format.png);
           conv.toFile(tmpFilename, function(err) {
-
             async.waterfall([
               function(nextStep) {
                 sharp(resizedBackground)
