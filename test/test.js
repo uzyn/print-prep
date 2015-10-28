@@ -102,7 +102,7 @@ describe('Convert single file', function() {
     });
   });
 
-  // COVER: source is file but output is directory. (accept, output file name will same as original)
+  // TODO: source is file but output is directory. (accept, output file name will same as original)
 });
 
 describe('Convert multiple files', function() {
@@ -158,28 +158,28 @@ describe('Read config file', function() {
       assert.isNull(err, 'Unable to read config.json');
 
       var outputFiles = fs.readdirSync(outputPath());
-      assert.equal(outputFiles.length, 5, 'Output should have 4 photos.');
+      assert.equal(outputFiles.length, 2, 'Output should have 1 photos.');
       done();
     });
   });
 
   it('auto load default config file.', function(done) {
-    var copy = fs.createReadStream('./test/printprep.config.example.json').pipe(
-      fs.createWriteStream('./test/printprep.config.json')
-    );
+    fs.writeFile('./test/printprep.config.json', JSON.stringify({
+      source: './originals/4-3.png',
+      output: './output/3-2.png'
+    }), function (err) {
+      assert.isNull(err, 'Unable to write printprep.config.json');
 
-    exec('cd ./test && printprep', function(err) {
-      assert.isNull(err, 'Unable to read config.json');
+      exec('cd ./test && printprep', function(err) {
+        assert.isNull(err, 'Unable to read printprep.config.json');
 
-      var preprocessFiles = fs.readdirSync(preprocessPath());
-      assert.equal(preprocessFiles.length, 5, 'Output should have 4 photos.');
+        var outputFiles = fs.readdirSync(outputPath());
+        assert.equal(outputFiles.length, 2, 'Output should have 1 photos.');
 
-      var outputFiles = fs.readdirSync(outputPath());
-      assert.equal(outputFiles.length, 5, 'Output should have 4 photos.');
-
-      fs.unlink('./test/printprep.config.json', function(err) {
-        assert.isNull(err, 'Unable to delete printprep.config.json');
-        done();
+        fs.unlink('./test/printprep.config.json', function(err) {
+          assert.isNull(err, 'Unable to delete printprep.config.json');
+          done();
+        });
       });
     });
   });

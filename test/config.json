@@ -1,5 +1,5 @@
 {
-  "source": "./test/originals",
-  "output": "./test/output",
+  "source": "./test/originals/4-3.png",
+  "output": "./test/output/3-2.png",
   "position": "right"
 }
