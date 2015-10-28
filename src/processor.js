@@ -280,8 +280,9 @@ function resize(options, next) {
                   .sharpen()
                   .toFormat(sharp.format.png)
                   .toBuffer(function(err, buffer, info) {
-                    fs.unlinkSync(tmpFilename);
-                    nextStep(err, buffer);
+                    fs.unlink(tmpFilename, function() {
+                      nextStep(err, buffer);
+                    });
                   });
               },
 
