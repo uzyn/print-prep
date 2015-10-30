@@ -1,6 +1,8 @@
 # print-prep
 Digicam photo prep for print shops.
 
+[![Build Status](https://travis-ci.org/uzyn/print-prep.svg?branch=master)](https://travis-ci.org/uzyn/print-prep)
+
 ### Help
 ```
 printprep [<source>] [<destination>] [<options>]
