@@ -273,28 +273,11 @@ function resize(options, next) {
           conv.background(rgb('transparent'));
           conv.toFormat(sharp.format.png);
           conv.toFile(tmpFilename, function(err) {
-            async.waterfall([
-              function(nextStep) {
-                sharp(resizedBackground)
-                  .overlayWith(tmpFilename) // overlayWith() not support buffer yet
-                  .sharpen()
-                  .toFormat(sharp.format.png)
-                  .toBuffer(function(err, buffer, info) {
-                    fs.unlink(tmpFilename, function() {
-                      nextStep(err, buffer);
-                    });
-                  });
-              },
-
-              function(combinedImage, nextStep) {
-                sharp(combinedImage)
-                  .flatten()
-                  .quality(100)
-                  .toFile(file.output, nextStep);
-              }
-            ], function(err) {
-              callback(err);
-            });
+            sharp(combinedImage)
+              .overlayWith(tmpFilename)
+              .flatten()
+              .quality(100)
+              .toFile(file.output, callback);
           });
         }
 
