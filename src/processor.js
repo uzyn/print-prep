@@ -48,7 +48,9 @@ module.exports = {
         nextEach(err);
       });
     }, function(err) {
-      log.error(err);
+      if (err) {
+        log.error(err);
+      }
       return next(err);
     });
   },
