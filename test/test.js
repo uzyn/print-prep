@@ -63,7 +63,7 @@ describe('Convert single file', function() {
   });
 
   it('4:3 to 3:4 (JPEG format)', function(done) {
-    exec('printprep ' + originalPath('4-3.jpg') + ' ' + outputPath('3-4.jpg'), function(err, o, e) {
+    exec('node ./src/index.js ' + originalPath('4-3.jpg') + ' ' + outputPath('3-4.jpg'), function(err, o, e) {
       assert.isNull(err, err);
 
       async.parallel({
@@ -83,7 +83,7 @@ describe('Convert single file', function() {
   });
 
   it('4:3 to 3:4 (PNG format)', function(done) {
-    exec('printprep ' + originalPath('4-3.png') + ' ' + outputPath('3-4.png'), function(err) {
+    exec('node ./src/index.js ' + originalPath('4-3.png') + ' ' + outputPath('3-4.png'), function(err) {
       assert.isNull(err, err);
 
       async.parallel({
@@ -112,14 +112,14 @@ describe('Convert multiple files', function() {
   });
 
   it('source is directory but output is file should throw error', function(done) {
-    exec('printprep ' + originalPath() + ' ' + outputPath('a-file.jpg'), function(err) {
+    exec('node ./src/index.js ' + originalPath() + ' ' + outputPath('a-file.jpg'), function(err) {
       assert.isNotNull(err, 'Output must be a directory');
       done();
     });
   });
 
   it('source is directory and output is directory', function(done) {
-    exec('printprep ' + originalPath() + ' ' + outputPath(), function(err) {
+    exec('node ./src/index.js ' + originalPath() + ' ' + outputPath(), function(err) {
       assert.isNull(err, err);
 
       var originalFiles = fs.readdirSync(originalPath());
@@ -154,7 +154,7 @@ describe('Read config file', function() {
   });
 
   it('load config.json.', function(done) {
-    exec('printprep --config=./test/config.json', function(err) {
+    exec('node ./src/index.js --config=./test/config.json', function(err) {
       assert.isNull(err, 'Unable to read config.json');
 
       var outputFiles = fs.readdirSync(outputPath());
@@ -170,7 +170,7 @@ describe('Read config file', function() {
     }), function (err) {
       assert.isNull(err, 'Unable to write printprep.config.json');
 
-      exec('cd ./test && printprep', function(err) {
+      exec('cd ./test && node ../src/index.js', function(err) {
         assert.isNull(err, 'Unable to read printprep.config.json');
 
         var outputFiles = fs.readdirSync(outputPath());
