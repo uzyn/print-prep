@@ -7,6 +7,7 @@ var sharp = require('sharp');
 var async = require('async');
 var rgb = require('rgb');
 
+var log = null;
 var caches = {};
 
 var defaultOptions = {
@@ -39,13 +40,15 @@ module.exports = {
       configs.push(options);
     }
 
+    log = options.logger;
+
     async.eachSeries(configs, function(config, nextEach) {
       var opts = _.merge(_.clone(defaultOptions), config);
       resize(opts, function(err) {
         nextEach(err);
       });
     }, function(err) {
-      console.log(err);
+      log.error(err);
       return next(err);
     });
   },
@@ -195,7 +198,8 @@ function resize(options, next) {
         }
 
         size = normalizeSize(size);
-        console.log('Normalize: ', size);
+
+        log.debug('Normalize sizes: ', size);
 
         callback(null, meta, landscape, size);
       },
@@ -225,7 +229,8 @@ function resize(options, next) {
             caches[idx] = buffer;
 
             var end = new Date().getTime();
-            console.log('Resize background use time (ms): ', end - start);
+            log.debug('Resize background use time (ms): ', end - start);
+
             callback(err, meta, landscape, size, buffer);
           });
       },

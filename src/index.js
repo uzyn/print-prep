@@ -2,6 +2,7 @@
 'use strict';
 
 var nopt = require('nopt');
+var Log = require('log');
 var processor = require('./processor');
 
 var knownOptions = {
@@ -10,8 +11,10 @@ var knownOptions = {
   color: String,
   ratio: String,
   ext: [String, Array],
-  normalize: Boolean
+  normalize: Boolean,
+  verbose: Boolean
 };
+
 var shortHands = {
   p: ['--position'],
   f: ['--fillup'],
@@ -20,17 +23,22 @@ var shortHands = {
   e: ['--ext'],
   n: ['--normalize'],
   i: ['--config'],
-  b: ['--background']
+  b: ['--background'],
+  v: ['--verbose']
 };
 var options = nopt(knownOptions, shortHands);
-console.log(options);
 
 options.source = options.argv.remain[0];
 options.output = options.argv.remain[1];
+
+if (options.verbose) {
+  options.logger = new Log('debug');
+} else {
+  options.logger = new Log('warning');
+}
 
 processor.process(options, function(err) {
   if (err) {
     throw new Error(err)
   }
-  console.log('Done');
 });
