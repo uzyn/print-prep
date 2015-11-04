@@ -65,7 +65,7 @@ module.exports = {
 };
 
 function isLandscape(meta) {
-  return meta.width > meta.height;
+  return meta.width >= meta.height;
 }
 
 function parseRatio(ratio) {
@@ -239,7 +239,7 @@ function resize(options, next) {
 
       function(meta, landscape, size, resizedBackground, callback) {
         var conv = sharp(file.source).rotate();
-        if (!landscape || meta.width === meta.height) {
+        if (!landscape) {
           conv.rotate(270);
         }
 
