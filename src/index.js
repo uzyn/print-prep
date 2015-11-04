@@ -31,14 +31,15 @@ var options = nopt(knownOptions, shortHands);
 options.source = options.argv.remain[0];
 options.output = options.argv.remain[1];
 
+var log = new Log('warning');
 if (options.verbose) {
-  options.logger = new Log('debug');
-} else {
-  options.logger = new Log('warning');
+  log = new Log('debug');
 }
+
+options.logger = log;
 
 processor.process(options, function(err) {
   if (err) {
-    throw new Error(err)
+    process.exit(1);
   }
 });
