@@ -170,7 +170,7 @@ function resize(options, next) {
     return next('No photos found.');
   }
 
-  async.each(files, function(file, nextEach) {
+  async.eachSeries(files, function(file, nextEach) {
     async.waterfall([
       function(callback) {
         sharp(file.source).metadata(callback);
@@ -280,11 +280,15 @@ function resize(options, next) {
           conv.background(rgb('transparent'));
           conv.toFormat(sharp.format.png);
           conv.toFile(tmpFilename, function(err) {
-            sharp(combinedImage)
+            sharp(resizedBackground)
               .overlayWith(tmpFilename)
               .flatten()
               .quality(100)
-              .toFile(file.output, callback);
+              .toFile(file.output, function(err) {
+                fs.unlink(tmpFilename, function() {
+                  callback(err);
+                });
+              });
           });
         }
 
