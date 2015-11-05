@@ -2,7 +2,7 @@
 'use strict';
 
 var nopt = require('nopt');
-var Log = require('log');
+var log = require('./log');
 var processor = require('./processor');
 
 var knownOptions = {
@@ -31,16 +31,15 @@ var options = nopt(knownOptions, shortHands);
 options.source = options.argv.remain[0];
 options.output = options.argv.remain[1];
 
-var log = new Log('warning');
 if (options.verbose) {
-  log = new Log('debug');
+  log.level('verbose');
 }
 
 options.logger = log;
 
 processor.process(options, function(err) {
   if (err) {
-    if (log.level > 4) {
+    if (log.level() == 'verbose') {
       throw new Error(err);
     }
     process.exit(1);
