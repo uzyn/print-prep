@@ -40,6 +40,9 @@ options.logger = log;
 
 processor.process(options, function(err) {
   if (err) {
+    if (log.level > 4) {
+      throw new Error(err);
+    }
     process.exit(1);
   }
 });
