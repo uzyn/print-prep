@@ -201,7 +201,7 @@ function resize(options, next) {
 
         size = normalizeSize(size);
 
-        log.debug('Normalize sizes: ', size);
+        log.verbose('Normalize sizes: ', size);
 
         callback(null, meta, landscape, size);
       },
@@ -231,7 +231,7 @@ function resize(options, next) {
             caches[idx] = buffer;
 
             var end = new Date().getTime();
-            log.debug('Resize background use time (ms): ', end - start);
+            log.verbose('Resize background use time (ms): ', end - start);
 
             callback(err, meta, landscape, size, buffer);
           });
