@@ -10,7 +10,7 @@ module.exports = {
 
   verbose: function() {
     if (level === 'verbose') {
-      console.log('VERBOSE', Array.prototype.slice.call(arguments));
+      console.log(Array.prototype.slice.call(arguments));
     }
   },
 
