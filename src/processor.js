@@ -238,6 +238,15 @@ function resize(options, next) {
       },
 
       function(meta, landscape, size, resizedBackground, callback) {
+        try {
+          fs.mkdirSync(path.dirname(options.output));
+        } catch(e) {
+          if (e.code !== 'EEXIST') {
+            return callback('Unable to make folder.');
+          }
+        }
+
+
         var conv = sharp(file.source).rotate();
         if (!landscape) {
           conv.rotate(270);
