@@ -264,7 +264,7 @@ function resize(options, next) {
               break;
 
             case 'center':
-              conv.extract(0, Math.round((size.intWidth - size.width) / 2), size.width, size.height);
+              conv.extract(Math.round((size.intHeight - size.height) / 2), Math.round((size.intWidth - size.width) / 2), size.width, size.height);
               break;
 
             case 'right':

@@ -28,7 +28,6 @@
   "homepage": "https://github.com/uzyn/print-prep#readme",
   "dependencies": {
     "async": "^1.2.1",
-    "gm": "^1.20.0",
     "lodash": "^3.9.3",
     "nopt": "^3.0.3",
     "rgb": "^0.1.0",
